@@ -34,14 +34,14 @@ class StockSeriesDataSet(Dataset):
     def __getitem__(self, index):
         return self.x[index], self.y[index]
 
-    def _create_input_target_data(data, window_size, fcst_period, normalize_factor=None):
+    def _create_input_target_data(self, data_frame, window_size, fcst_period, normalize_factor=None):
         # Normalize data
         if normalize_factor is None:
-            normalize = data.max().max()
-            df = data / normalize  
+            normalize = data_frame.max().max()
+            df = data_frame / normalize  
         else:
             normalize = None
-            df = data / normalize_factor    
+            df = data_frame / normalize_factor    
         # Get input and target data from time series
         inputs = []
         targets = []
