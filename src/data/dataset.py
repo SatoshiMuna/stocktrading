@@ -10,15 +10,13 @@ def get_stock_info(sotck_code, start_date, end_date):
     # Return pandas.DataFrame(date, stock_values)
     stock_data = code_info.history(start=start, end=end)
     logging.info('company name:%s, data start:%s, data end:%s', code_info.info['shortName'], start_date, end_date)
-
-
+    return stock_data
 class StockSeriesDataSet(Dataset):
     def __init__(self, data, window_size, fcst_period, col_start, col_end, is_train, insample_end_date=None, denormalize=None):
         super().__init__()
         # Select columns of time series to use
         cols = ['Open', 'High', 'Low', 'Close', 'Volume']
-        selected_cols = cols[col_start:col_end]
-        df = data[selected_cols]
+        df = data[cols[col_start:col_end]]
         self.insample_end_index = df.index.get_loc(insample_end_date) if insample_end_date is not None else None
         if is_train:
             # Extract data during training period
@@ -49,6 +47,6 @@ class StockSeriesDataSet(Dataset):
             inputs.append(torch.tensor(df[i:i+window_size].to_numpy()))
             targets.append(torch.tensor(df[i+window_size:i+window_size+fcst_period]['Close'].to_numpy()))
 
-        print(inputs[0], targets[0])
+        #print(inputs[0], targets[0])
         assert len(inputs)==len(targets), "Input data size and target one are different."
         return inputs, targets, normalize
