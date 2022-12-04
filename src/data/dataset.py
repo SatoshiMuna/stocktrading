@@ -3,7 +3,7 @@ import yfinance as yf
 import torch
 from torch.utils.data import Dataset
 
-def get_stock_info(sotck_code, start_date, end_date):
+def get_stock_data(sotck_code, start_date, end_date):
     code_info = yf.Ticker(sotck_code)  # Tokyo Electron
     start = start_date
     end = end_date
@@ -11,16 +11,16 @@ def get_stock_info(sotck_code, start_date, end_date):
     stock_data = code_info.history(start=start, end=end)
     logging.info('company name:%s, data start:%s, data end:%s', code_info.info['shortName'], start_date, end_date)
     return stock_data
+    
 class StockSeriesDataSet(Dataset):
-    def __init__(self, data, window_size, fcst_period, col_start, col_end, is_train, insample_end_date=None, denormalize=None):
+    def __init__(self, data, window_size, fcst_period, col_start, col_end, is_train, insample_end_idx=None, denormalize=None):
         super().__init__()
         # Select columns of time series to use
         cols = ['Open', 'High', 'Low', 'Close', 'Volume']
         df = data[cols[col_start:col_end]]
-        self.insample_end_index = df.index.get_loc(insample_end_date) if insample_end_date is not None else None
         if is_train:
             # Extract data during training period
-            insample_data = df[:self.insample_end_index + 1]
+            insample_data = df[:insample_end_idx + 1] if insample_end_idx is not None else df[:]
             # Get training data as torch.tensor type from a raw stock series
             self.x, self.y, self.denormalize = self._create_input_target_data(insample_data, window_size, fcst_period)
         else :
