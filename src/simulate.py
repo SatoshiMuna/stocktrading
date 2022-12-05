@@ -66,19 +66,22 @@ class AIStrategy(Strategy):
     '''AIによる戦略
     '''
     def init(self):
-        self.strategy = np.array(self.data.Strategy)
+        self.ai_strategy = self.I(self.decide, self.data.Strategy)
 
     def next(self):
-        if self.strategy == 1 :
+        if self.ai_strategy[-1] == 1 :
             self.buy()
-        elif self.strategy == 0 :
+        elif self.ai_strategy[-1] == 0 :
             self.position.close()
+
+    def decide(self, series):
+        return series
+
 
 
 def backtest(csv_file_path):
     # Get stock data through yfinance api as a type of pandas.DataFrame 
-    stock_data = pd.read_csv(csv_file_path)#, index_col='Date', parse_dates=True)
-    stock_data['Date'] = pd.to_datetime(stock_data['Date'])
+    stock_data = pd.read_csv(csv_file_path, index_col='Date', parse_dates=True)
     bt = Backtest(data=stock_data, strategy=AIStrategy, cash=100000, trade_on_close=True,  exclusive_orders=False)
     stats = bt.run()
     #stats=bt.optimize(n1=range(10, 50, 5), n2=range(50, 100, 5), maximize='Equity Final [$]')
