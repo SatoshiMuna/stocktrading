@@ -72,6 +72,7 @@ class NetworkTrainer:
             print(f"epoch:{e}, loss:{loss.item()}")
             train_loss.append(loss.item())
 
+        torch.save(self.net.state_dict(), 'learned_model.pth')
         return train_loss
 
     def do_test(self, fcst_col_idx=3):

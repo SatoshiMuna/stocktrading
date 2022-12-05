@@ -3,13 +3,13 @@ import yfinance as yf
 import torch
 from torch.utils.data import Dataset
 
-def get_stock_data(sotck_code, start_date, end_date):
-    code_info = yf.Ticker(sotck_code)  # Tokyo Electron
+def get_stock_data(stock_code, start_date, end_date):
+    code_info = yf.Ticker(stock_code) 
     start = start_date
     end = end_date
     # Return pandas.DataFrame(date, stock_values)
     stock_data = code_info.history(start=start, end=end)
-    logging.info('company name:%s, data start:%s, data end:%s', code_info.info['shortName'], start_date, end_date)
+    logging.info('Get stock data - company name:%s, data start:%s, data end:%s', code_info.info['shortName'], start_date, end_date)
     return stock_data
     
 class StockSeriesDataSet(Dataset):
