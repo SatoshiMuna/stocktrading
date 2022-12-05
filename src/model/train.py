@@ -21,13 +21,12 @@ class NetworkTrainer:
         self.fcst_period = fcst_period
 
         if input_size == 4:   # 0:Open, 1:High, 2:Low, 3:Close
-            self.col_startidx = 0
-            self.col_endidx = 4  
+            self.columns = [0, 4]
         elif input_size == 1: # 3:Close
-            self.col_startidx = 3
-            self.col_endidx = 4
-
-        self.denormalize_factor = 1  # Value obtained by normalizing traing data 
+            self.columns = [3, 4]
+        
+        # Normalization factor is a max value of training data
+        self.normalization = stock_data[:insample_end_idx+1].max().max() 
 
         # Initialize network
         torch.manual_seed(seed)
@@ -37,10 +36,10 @@ class NetworkTrainer:
         
     def do_train(self, learning_rate=0.01, batch_size=64, epoch=5):
         # Training data
-        train_dataset = StockSeriesDataSet(self.stock_data, self.window_size, self.fcst_period, self.col_startidx, self.col_endidx, is_train=True, insample_end_idx=self.insample_end_idx) 
+        train_dataset = StockSeriesDataSet(True, self.stock_data, self.window_size, self.fcst_period, self.columns,
+                                           self.normalization, self.insample_end_idx) 
         train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=2, pin_memory=True)
-        self.denormalize_factor = train_dataset.denormalize
-
+    
         # Loss and optimizer
         criterion = nn.MSELoss()
         optimizer = optim.Adam(params=self.net.parameters(), lr=learning_rate)
@@ -76,15 +75,16 @@ class NetworkTrainer:
         return train_loss
 
     def do_test(self, fcst_col_idx=3):
+        self.net.load_state_dict(torch.load('learned_model.pth'))
+        self.net.to(device)  #.to(dtype=torch.float64, device=device)
         self.net.eval()
         # Test data
-        test_dataset = StockSeriesDataSet(self.stock_data, self.window_size, self.fcst_period, self.col_startidx,
-                                          self.col_endidx, is_train=False, denormalize=self.denormalize_factor)
+        test_dataset = StockSeriesDataSet(False, self.stock_data, self.window_size, self.fcst_period, self.columns, self.normalization)
 
         mape = []
         rmse = []
-        close_rslts = test_dataset[0][0][:,fcst_col_idx].numpy().copy() * self.denormalize_factor
-        close_fcsts = test_dataset[0][0][:,fcst_col_idx].numpy().copy() * self.denormalize_factor
+        #close_rslts = test_dataset[0][0][:,fcst_col_idx].numpy().copy() * self.denormalize_factor
+        close_fcsts = test_dataset[0][0][:,fcst_col_idx].numpy().copy() * self.normalization
         with torch.no_grad():
             for itr, (x, y) in enumerate(test_dataset):
                 if not torch.cuda.is_available():
@@ -96,13 +96,14 @@ class NetworkTrainer:
                 #print(y,y_pred)
                 if itr > self.insample_end_idx:
                     mape.append(torch.abs((y-y_pred[0])/y).to('cpu').numpy().copy())
-                    rmse.append(torch.pow((y-y_pred[0])*self.denormalize_factor, 2).to('cpu').numpy().copy())
+                    rmse.append(torch.pow((y-y_pred[0])*self.normalization, 2).to('cpu').numpy().copy())
 
-                close_rslts = np.append(close_rslts, y.to('cpu').numpy().copy() * self.denormalize_factor)
-                close_fcsts = np.append(close_fcsts, y_pred.to('cpu').numpy().copy() * self.denormalize_factor)
+                #close_rslts = np.append(close_rslts, y.to('cpu').numpy().copy() * self.denormalize_factor)
+                close_fcsts = np.append(close_fcsts, y_pred.to('cpu').numpy().copy() * self.normalization)
 
         mape = np.mean(mape)
         rmse = np.sqrt(np.mean(rmse))
 
-        return close_rslts, close_fcsts, mape, rmse
+        df = self.stock_data.assign(Forecast=close_fcsts)
+        return df, mape, rmse
 

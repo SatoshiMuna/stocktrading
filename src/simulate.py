@@ -3,6 +3,8 @@ from backtesting.lib import crossover
 from backtesting.test import SMA
 from backtesting import Backtest
 import talib as ta
+import pandas as pd
+import numpy as np
 
 from data.dataset import get_stock_data
 
@@ -30,7 +32,6 @@ class SMACrossover(Strategy):
                 self.position.close()
 
         self.pre_diff = self.sma1 - self.sma2  
-
 
 class MACDCrossover(Strategy):
     '''MCAD/シグナルクロスオーバー戦略
@@ -61,12 +62,24 @@ class MACDCrossover(Strategy):
         macd, macdsignal, macdhist = ta.MACD(series, fastperiod=short, slowperiod=long, signalperiod=signal)
         return macd, macdsignal, macdhist
 
-def backtest(stock_code, data_start, data_end, insample_end):
-    # Get stock data through yfinance api as a type of pandas.DataFrame 
-    stock_data = get_stock_data(stock_code, data_start, data_end)
-    insample_end_idx = stock_data.index.get_loc(insample_end)
+class AIStrategy(Strategy):
+    '''AIによる戦略
+    '''
+    def init(self):
+        self.strategy = np.array(self.data.Strategy)
 
-    bt = Backtest(data=stock_data, strategy=MACDCrossover, cash=100000, trade_on_close=True,  exclusive_orders=False)
+    def next(self):
+        if self.strategy == 1 :
+            self.buy()
+        elif self.strategy == 0 :
+            self.position.close()
+
+
+def backtest(csv_file_path):
+    # Get stock data through yfinance api as a type of pandas.DataFrame 
+    stock_data = pd.read_csv(csv_file_path)#, index_col='Date', parse_dates=True)
+    stock_data['Date'] = pd.to_datetime(stock_data['Date'])
+    bt = Backtest(data=stock_data, strategy=AIStrategy, cash=100000, trade_on_close=True,  exclusive_orders=False)
     stats = bt.run()
     #stats=bt.optimize(n1=range(10, 50, 5), n2=range(50, 100, 5), maximize='Equity Final [$]')
     #stats=bt.optimize(n1=range(5, 20, 1), n2=range(20, 32, 1), maximize='Equity Final [$]')
@@ -75,5 +88,5 @@ def backtest(stock_code, data_start, data_end, insample_end):
     bt.plot()
 
 if __name__ == '__main__':
-    args = input('証券コード,データ開始日,データ終了日,学習終了日:').split(',')
-    backtest(args[0], args[1], args[2], args[3])
+    arg = input('CSVファイルパス:')
+    backtest(arg)
