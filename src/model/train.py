@@ -1,16 +1,21 @@
+import sys
+import logging
 import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torchinfo import summary
+import torch.linalg as la
 from torch.utils.data import DataLoader
+from torchinfo import summary
 
 from data.dataset import StockSeriesDataSet
-from model.network import device, StockSeriesRNN, StockSeriesLSTM
+from model.network import device, SeriesRNN, SeriesLSTM, SelfAttnSeriesLSTM, SelfAttnSeriesRNN
 
 class NetworkTrainer:
     def __init__(self, stock_data, insample_end_idx, input_size=4, hidden_size=128, 
-                 num_layers=1, window_size=14, output_size=1, fcst_period=1, seed=1):
+                 num_layers=1, window_size=14, bidirectional=False, da=100, r=1, 
+                 output_size=1, fcst_period=1, seed=1):
         self.stock_data = stock_data
         self.insample_end_idx = insample_end_idx
         self.input_size = input_size
@@ -30,8 +35,10 @@ class NetworkTrainer:
 
         # Initialize network
         torch.manual_seed(seed)
-        #self.net = StockSeriesRNN(input_size, hidden_size, num_layers, window_size, output_size, fcst_period)
-        self.net = StockSeriesLSTM(input_size, hidden_size, num_layers, window_size, output_size, fcst_period)
+        #self.net = SeriesRNN(input_size, hidden_size, num_layers, window_size, output_size, fcst_period)
+        #self.net = SeriesLSTM(input_size, hidden_size, num_layers, window_size, bidirectional, output_size, fcst_period)
+        #self.net = SelfAttnSeriesRNN(input_size, hidden_size, num_layers, window_size, bidirectional, da, r, output_size, fcst_period)
+        self.net = SelfAttnSeriesLSTM(input_size, hidden_size, num_layers, window_size, bidirectional, da, r, output_size, fcst_period)
         #summary(self.net, input_size=(64, window_size, input_size))
         
     def do_train(self, learning_rate=0.01, batch_size=64, epoch=5):
@@ -45,10 +52,12 @@ class NetworkTrainer:
         optimizer = optim.Adam(params=self.net.parameters(), lr=learning_rate)
 
         # Train network
+        logging.info('Start Training - epoch:%s, model:%s', epoch, type(self.net))
         self.net.to(device)  #.to(dtype=torch.float64, device=device)
         self.net.train()
         train_loss = []
         loss = None
+        pre_loss = sys.float_info.max
         for e in range(epoch):
             for batch_idx, (x, y) in enumerate(train_loader):    
                 if not torch.cuda.is_available():
@@ -61,20 +70,29 @@ class NetworkTrainer:
                 # Forward
                 y_pred = self.net(x)
                 #print(self.net.state_dict())
-                loss = criterion(y, y_pred)    
+                if (isinstance(self.net, SelfAttnSeriesRNN) or isinstance(self.net, SelfAttnSeriesLSTM)) and self.net.r > 1:
+                    p = torch.matmul(torch.transpose(self.net.attn_weights, 2, 1), self.net.attn_weights) - torch.eye(self.net.r)
+                    loss = criterion(y, y_pred) + 0.01 * la.norm(p)  
+                else:
+                    loss = criterion(y, y_pred)    
 
                 # Backward and optimization step
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
 
-            print(f"epoch:{e}, loss:{loss.item()}")
-            train_loss.append(loss.item())
+            num_loss = loss.item()
+            print(f"epoch:{e}, loss:{num_loss}")
+            train_loss.append(num_loss)
+            logging.info('epoch:%s, loss:%s, model-save:%s', e, num_loss, num_loss<pre_loss)
+            if num_loss < pre_loss:
+                torch.save(self.net.state_dict(), 'learned_model.pth')
+                pre_loss = num_loss
 
-        torch.save(self.net.state_dict(), 'learned_model.pth')
         return train_loss
 
     def do_test(self, fcst_col_idx=3):
+        logging.info('Start Out-of-sample Test - model:%s', type(self.net))
         self.net.load_state_dict(torch.load('learned_model.pth'))
         self.net.to(device)  #.to(dtype=torch.float64, device=device)
         self.net.eval()
@@ -93,7 +111,7 @@ class NetworkTrainer:
                 x = x.unsqueeze(0).to(device=device)  # (1, window_size, input_size)
                 y = y.to(device=device)
                 y_pred = self.net(x)
-                #print(y,y_pred)
+                
                 if itr > self.insample_end_idx:
                     mape.append(torch.abs((y-y_pred[0])/y).to('cpu').numpy().copy())
                     rmse.append(torch.pow((y-y_pred[0])*self.normalization, 2).to('cpu').numpy().copy())
@@ -103,7 +121,7 @@ class NetworkTrainer:
 
         mape = np.mean(mape)
         rmse = np.sqrt(np.mean(rmse))
-
+        logging.info('Out-of-sample Test Result - mape:%s, rmse:%s', mape, rmse)
         df = self.stock_data.assign(Forecast=close_fcsts)
         return df, mape, rmse
 

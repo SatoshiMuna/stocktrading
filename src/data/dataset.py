@@ -9,7 +9,7 @@ def get_stock_data(stock_code, start_date, end_date, use_cols=['Open', 'High', '
     end = end_date
     # Return pandas.DataFrame(date, stock_values)
     stock_data = code_info.history(start=start, end=end)
-    logging.info('Get stock data - company name:%s, data start:%s, data end:%s', code_info.info['shortName'], start_date, end_date)
+    logging.info('Get stock data - code:%s, company name:%s, data start:%s, data end:%s', stock_code, code_info.info['shortName'], start_date, end_date)
     return stock_data[use_cols]
     
 class StockSeriesDataSet(Dataset):
