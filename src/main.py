@@ -7,7 +7,7 @@ import seaborn as sns
 from model import train
 from data.dataset import get_stock_data
 
-matplotlib.use('TkAgg')
+#matplotlib.use('TkAgg')
 
 def _make_strategy(forecast_close, today_close):
     if forecast_close > today_close:
