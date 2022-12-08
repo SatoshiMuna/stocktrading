@@ -32,9 +32,9 @@ def main(stock_code, data_start, data_end, insample_end, exec_train):
     insample_end_idx = stock_data.index.get_loc(insample_end)
 
     # Training network
-    trainer = train.NetworkTrainer(stock_data, insample_end_idx)
+    trainer = train.NetworkTrainer(stock_data, insample_end_idx, bidirectional=True, r=1)
     if exec_train == 'y':
-        train_loss = trainer.do_train(epoch=20)
+        train_loss = trainer.do_train(epoch=30)
         # Plot train loss 
         tl = pd.Series(train_loss)
         tl.plot(title='training-loss')
