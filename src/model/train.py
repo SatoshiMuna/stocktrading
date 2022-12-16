@@ -10,12 +10,12 @@ from torch.utils.data import DataLoader
 from torchinfo import summary
 
 from data.dataset import StockSeriesDataSet
-from model.network import device, SeriesRNN, SeriesLSTM, SelfAttnSeriesLSTM, SelfAttnSeriesRNN
+from model.network import device, SeriesRNN, SeriesLSTM, SelfAttnSeriesLSTM, SelfAttnSeriesRNN, StockPriceResNet
 
 class NetworkTrainer:
     def __init__(self, stock_data, insample_end_idx, input_size=4, hidden_size=128, 
-                 num_layers=1, window_size=14, bidirectional=False, da=100, r=1, 
-                 output_size=1, fcst_period=1, seed=1):
+                 num_layers=1, window_size=14, bidirectional=False, da=64, r=1, pc=0.01, 
+                 output_size=1, fcst_period=1, prob_target=False, seed=1):
         self.stock_data = stock_data
         self.insample_end_idx = insample_end_idx
         self.input_size = input_size
@@ -24,11 +24,15 @@ class NetworkTrainer:
         self.window_size = window_size
         self.output_size = output_size
         self.fcst_period = fcst_period
-
-        if input_size == 4:   # 0:Open, 1:High, 2:Low, 3:Close
+        self.prob_target = prob_target
+        self.penalty_coef = pc
+        # 0:Open, 1:High, 2:Low, 3:Close, 4:Volume
+        if input_size == 4:   
             self.columns = [0, 4]
-        elif input_size == 1: # 3:Close
-            self.columns = [3, 4]
+        elif input_size == 5:
+            self.columns = [0, 5]
+        else:
+            self.columns = [3, 4]  # 3:Close
         
         # Normalization factor is a max value of training data
         self.normalization = stock_data[:insample_end_idx+1].max().max() 
@@ -38,21 +42,22 @@ class NetworkTrainer:
         #self.net = SeriesRNN(input_size, hidden_size, num_layers, window_size, output_size, fcst_period)
         #self.net = SeriesLSTM(input_size, hidden_size, num_layers, window_size, bidirectional, output_size, fcst_period)
         #self.net = SelfAttnSeriesRNN(input_size, hidden_size, num_layers, window_size, bidirectional, da, r, output_size, fcst_period)
-        self.net = SelfAttnSeriesLSTM(input_size, hidden_size, num_layers, window_size, bidirectional, da, r, output_size, fcst_period)
+        #self.net = SelfAttnSeriesLSTM(input_size, hidden_size, num_layers, window_size, bidirectional, da, r, output_size, fcst_period)
+        self.net = StockPriceResNet(in_channels=1, block_channels=32, out_channels=1, num_series=4, window_size=32, num_blocks=10, fcst_period=1)
         #summary(self.net, input_size=(64, window_size, input_size))
         
-    def do_train(self, learning_rate=0.01, batch_size=64, epoch=5):
+    def do_train(self, learning_rate=0.01, batch_size=32, epoch=5):
         # Training data
         train_dataset = StockSeriesDataSet(True, self.stock_data, self.window_size, self.fcst_period, self.columns,
-                                           self.normalization, self.insample_end_idx) 
+                                           self.normalization, self.insample_end_idx, self.prob_target) 
         train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=2, pin_memory=True)
     
         # Loss and optimizer
-        criterion = nn.MSELoss()
+        criterion = nn.CrossEntropyLoss() if self.prob_target else nn.MSELoss()
         optimizer = optim.Adam(params=self.net.parameters(), lr=learning_rate)
 
         # Train network
-        logging.info('Start Training - epoch:%s, model:%s', epoch, type(self.net))
+        logging.info('Start Training - size:%s, epoch:%s, batch:%s, model:%s', len(train_dataset), epoch, batch_size, type(self.net))
         self.net.to(device)  #.to(dtype=torch.float64, device=device)
         self.net.train()
         train_loss = []
@@ -72,7 +77,7 @@ class NetworkTrainer:
                 #print(self.net.state_dict())
                 if (isinstance(self.net, SelfAttnSeriesRNN) or isinstance(self.net, SelfAttnSeriesLSTM)) and self.net.r > 1:
                     p = torch.matmul(torch.transpose(self.net.attn_weights, 2, 1), self.net.attn_weights) - torch.eye(self.net.r)
-                    loss = criterion(y, y_pred) + 0.01 * la.norm(p)  
+                    loss = criterion(y, y_pred) + self.penalty_coef * la.norm(p)  
                 else:
                     loss = criterion(y, y_pred)    
 
@@ -92,12 +97,12 @@ class NetworkTrainer:
         return train_loss
 
     def do_test(self, fcst_col_idx=3):
-        logging.info('Start Out-of-sample Test - model:%s', type(self.net))
         self.net.load_state_dict(torch.load('learned_model.pth'))
         self.net.to(device)  #.to(dtype=torch.float64, device=device)
         self.net.eval()
         # Test data
         test_dataset = StockSeriesDataSet(False, self.stock_data, self.window_size, self.fcst_period, self.columns, self.normalization)
+        logging.info('Start Out-of-sample Test - size:%s, model:%s', len(test_dataset), type(self.net))
 
         mape = []
         rmse = []
