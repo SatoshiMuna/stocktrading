@@ -69,9 +69,9 @@ class AIStrategy(Strategy):
         self.ai_strategy = self.I(self.decide, self.data.Strategy)
 
     def next(self):
-        if self.ai_strategy[-1] == 1 :
+        if self.ai_strategy == 1 and self.position.is_long == False:
             self.buy()
-        elif self.ai_strategy[-1] == 0 :
+        elif self.ai_strategy == 0 :
             self.position.close()
 
     def decide(self, series):

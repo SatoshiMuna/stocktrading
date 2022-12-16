@@ -28,13 +28,14 @@ def main(stock_code, data_start, data_end, insample_end, exec_train):
     sns.set_theme(context='paper', style='darkgrid', palette='Set2', font_scale=1.5, rc={'figure.figsize': (16, 6), 'grid.linestyle': 'dashdot'})
     
     # Get stock info from yfinance as type of pandas.DataFrame
-    stock_data = get_stock_data(stock_code, data_start, data_end, use_cols=['Open', 'High', 'Low', 'Close'])
+    stock_data = get_stock_data(stock_code, data_start, data_end, use_cols=['Open', 'High', 'Low', 'Close', 'Volume'])
     insample_end_idx = stock_data.index.get_loc(insample_end)
 
     # Training network
-    trainer = train.NetworkTrainer(stock_data, insample_end_idx, bidirectional=True, r=1)
+    trainer = train.NetworkTrainer(stock_data, insample_end_idx, window_size=32, bidirectional=False, 
+                                   r=1, output_size=1, prob_target=False)
     if exec_train == 'y':
-        train_loss = trainer.do_train(epoch=30)
+        train_loss = trainer.do_train(batch_size=64, epoch=30)
         # Plot train loss 
         tl = pd.Series(train_loss)
         tl.plot(title='training-loss')
@@ -47,6 +48,7 @@ def main(stock_code, data_start, data_end, insample_end, exec_train):
     # Make buy/sell strategy and csv output
     df_out = set_strategy_col(df_fcsts, insample_end_idx)
     df_out.to_csv('forecast.csv')
+
     # Visualize
     diffs = df_out['Forecast'] - df_out['Close']
     df = df_out.assign(Difference=diffs)
