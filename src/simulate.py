@@ -78,7 +78,6 @@ class AIStrategy(Strategy):
         return series
 
 
-
 def backtest(csv_file_path):
     # Get stock data through yfinance api as a type of pandas.DataFrame 
     stock_data = pd.read_csv(csv_file_path, index_col='Date', parse_dates=True)

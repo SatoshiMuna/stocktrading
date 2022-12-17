@@ -139,11 +139,11 @@ class ResidualBlock(nn.Module):
     def forward(self, x):
         identity = x
         x = self.dilated_conv(x)  # (N,C,H,W)→(N,C,H,out_len)
-        x = self.relu(self.fc(x)) # (N,C,H,out_len)→(N,C,H,W)
+        x = self.relu(self.fc(x))            # (N,C,H,out_len)→(N,C,H,W)
         z = x + identity
         return z
 
-class StockPriceResNet(nn.Module):
+class DilatedConvResNet(nn.Module):
     def __init__(self, in_channels, block_channels, out_channels, num_series, window_size, num_blocks, fcst_period):
         super().__init__()
         res_layers = []
@@ -154,8 +154,7 @@ class StockPriceResNet(nn.Module):
         self.res_blocks = nn.Sequential(*res_layers)
         self.conv_ed = nn.Conv2d(block_channels, out_channels, kernel_size=(num_series, window_size), stride=1, bias=True)
         self.fc_ed = nn.Linear(out_channels, fcst_period)
-        self.relu = nn.ReLU()
-
+        
     def forward(self, x):
         x = torch.permute(x, (0, 2, 1))  # (N, L, C)→(N, C, L)
         x = x.unsqueeze(dim=1)           # (N, C, L)→(N, 1=C, C=H, L=W)
