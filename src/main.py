@@ -37,8 +37,7 @@ def main(stock_code, data_start, data_end, insample_end, exec_train):
     if exec_train == 'y':
         train_loss = trainer.do_train(batch_size=64, epoch=30)
         # Plot train loss 
-        tl = pd.Series(train_loss)
-        tl.plot(title='training-loss')
+        pd.Series(train_loss).plot(title='training-loss')
         plt.show()
     
     # Out-of-sample test    

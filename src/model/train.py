@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 from torchinfo import summary
 
 from data.dataset import StockSeriesDataSet
-from model.network import device, SeriesRNN, SeriesLSTM, SelfAttnSeriesLSTM, SelfAttnSeriesRNN, StockPriceResNet
+from model.network import device, SeriesRNN, SeriesLSTM, SelfAttnSeriesLSTM, SelfAttnSeriesRNN, DilatedConvResNet
 
 class NetworkTrainer:
     def __init__(self, stock_data, insample_end_idx, input_size=4, hidden_size=128, 
@@ -34,8 +34,8 @@ class NetworkTrainer:
         else:
             self.columns = [3, 4]  # 3:Close
         
-        # Normalization factor is a max value of training data
-        self.normalization = stock_data[:insample_end_idx+1].max().max() 
+        # Normalization factor is a max value of 4 stock prices in training data
+        self.normalization = stock_data.iloc[:insample_end_idx+1, 0:4].max().max() 
 
         # Initialize network
         torch.manual_seed(seed)
@@ -43,7 +43,7 @@ class NetworkTrainer:
         #self.net = SeriesLSTM(input_size, hidden_size, num_layers, window_size, bidirectional, output_size, fcst_period)
         #self.net = SelfAttnSeriesRNN(input_size, hidden_size, num_layers, window_size, bidirectional, da, r, output_size, fcst_period)
         #self.net = SelfAttnSeriesLSTM(input_size, hidden_size, num_layers, window_size, bidirectional, da, r, output_size, fcst_period)
-        self.net = StockPriceResNet(in_channels=1, block_channels=32, out_channels=1, num_series=4, window_size=32, num_blocks=10, fcst_period=1)
+        self.net = DilatedConvResNet(in_channels=1, block_channels=32, out_channels=1, num_series=4, window_size=32, num_blocks=10, fcst_period=1)
         #summary(self.net, input_size=(64, window_size, input_size))
         
     def do_train(self, learning_rate=0.01, batch_size=32, epoch=5):
@@ -53,7 +53,7 @@ class NetworkTrainer:
         train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=2, pin_memory=True)
     
         # Loss and optimizer
-        criterion = nn.CrossEntropyLoss() if self.prob_target else nn.MSELoss()
+        criterion = nn.CrossEntropyLoss() if self.prob_target else nn.HuberLoss()
         optimizer = optim.Adam(params=self.net.parameters(), lr=learning_rate)
 
         # Train network
