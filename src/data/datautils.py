@@ -5,7 +5,7 @@ from sklearn.decomposition import PCA
 def visualize_pca_of_stockprice(tensor_inputs, tensor_targets, dim=2):
     # Close price
     close = [ti[:,3].numpy().copy() for ti in tensor_inputs]
-    category = [tt.numpy().copy() for tt in tensor_targets]
+    category = [tt.numpy().copy() for tt in tensor_targets[1]]
     t = [0 if c[0]==1 else 1 for c in category]
     # PCA
     pca = PCA()

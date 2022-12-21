@@ -71,8 +71,8 @@ class AIStrategy(Strategy):
     def next(self):
         if self.ai_strategy == 1 and self.position.is_long == False:
             self.buy()
-        elif self.ai_strategy == 0 :
-            self.position.close()
+        elif self.ai_strategy == 0 and self.position.is_short == False:
+            self.sell()
 
     def decide(self, series):
         return series
@@ -81,7 +81,7 @@ class AIStrategy(Strategy):
 def backtest(csv_file_path):
     # Get stock data through yfinance api as a type of pandas.DataFrame 
     stock_data = pd.read_csv(csv_file_path, index_col='Date', parse_dates=True)
-    bt = Backtest(data=stock_data, strategy=AIStrategy, cash=100000, trade_on_close=True,  exclusive_orders=False)
+    bt = Backtest(data=stock_data, strategy=AIStrategy, cash=100000, trade_on_close=True, exclusive_orders=True)
     stats = bt.run()
     #stats=bt.optimize(n1=range(10, 50, 5), n2=range(50, 100, 5), maximize='Equity Final [$]')
     #stats=bt.optimize(n1=range(5, 20, 1), n2=range(20, 32, 1), maximize='Equity Final [$]')

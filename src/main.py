@@ -1,39 +1,42 @@
 import logging
 import pandas as pd
-import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 from model import train
 from data.dataset import get_stock_data
 
-#matplotlib.use('TkAgg')
-
-def _make_strategy(forecast_close, today_close):
-    if forecast_close > today_close:
-        return 1  # buy
+def _make_strategy(forecast, result, position):
+    if forecast >= result:
+        return 1 # buy
     else:
-        return 0  # sell
+        return 0 # sell      
 
-def set_strategy_col(data_frame, insample_end_idx):
+def set_strategy_col(data_frame, insample_end_idx, from_open):
     strategy = ['nan'] * len(data_frame)
+    position = 0
     for i, (idx, row) in enumerate(data_frame.iterrows()):
-        if i > insample_end_idx and i < len(data_frame):
-            strategy[i-1] = _make_strategy(data_frame.iloc[i]['Forecast'], data_frame.iloc[i-1]['Close'])
+        if from_open == False and (i >= insample_end_idx and i < len(data_frame) - 1):
+            strategy[i] = _make_strategy(data_frame.iloc[i+1]['Forecast'], data_frame.iloc[i]['Close'], position)
+            position = strategy[i]
+        if from_open and i > insample_end_idx:
+            strategy[i] = _make_strategy(data_frame.iloc[i]['Forecast'], data_frame.iloc[i]['Open'], position)
+            position = strategy[i]
     df_out = data_frame.assign(Strategy=strategy)
     return df_out
 
 def main(stock_code, data_start, data_end, insample_end, exec_train):
     logging.basicConfig(filename='stocktrading.log', level=logging.INFO, format='%(levelname)s:%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-    sns.set_theme(context='paper', style='darkgrid', palette='Set2', font_scale=1.5, rc={'figure.figsize': (16, 6), 'grid.linestyle': 'dashdot'})
+    sns.set_theme(context='paper', style='darkgrid', palette='Set2', font_scale=1.5, rc={'figure.figsize': (14, 5), 'grid.linestyle': 'dashdot'})
     
     # Get stock info from yfinance as type of pandas.DataFrame
     stock_data = get_stock_data(stock_code, data_start, data_end, use_cols=['Open', 'High', 'Low', 'Close', 'Volume'])
     insample_end_idx = stock_data.index.get_loc(insample_end)
+    open2close = False
 
     # Training network
-    trainer = train.NetworkTrainer(stock_data, insample_end_idx, window_size=32, bidirectional=False, 
-                                   r=1, output_size=1, prob_target=False)
+    trainer = train.NetworkTrainer(stock_data, insample_end_idx, input_size=5, in_channels=5, block_channels=32, window_size=32, 
+                                   out_channels=64, bidirectional=True, r=1, output_size=1, from_open=open2close, prob_target=False)
     if exec_train == 'y':
         train_loss = trainer.do_train(batch_size=64, epoch=30)
         # Plot train loss 
@@ -45,7 +48,7 @@ def main(stock_code, data_start, data_end, insample_end, exec_train):
     print(f'mape:{mape}, rmse:{rmse}')
 
     # Make buy/sell strategy and csv output
-    df_out = set_strategy_col(df_fcsts, insample_end_idx)
+    df_out = set_strategy_col(df_fcsts, insample_end_idx, from_open=open2close)
     df_out.to_csv('forecast.csv')
 
     # Visualize
