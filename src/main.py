@@ -32,10 +32,10 @@ def main(stock_code, data_start, data_end, insample_end, exec_train):
     # Get stock info from yfinance as type of pandas.DataFrame
     stock_data = get_stock_data(stock_code, data_start, data_end, use_cols=['Open', 'High', 'Low', 'Close', 'Volume'])
     insample_end_idx = stock_data.index.get_loc(insample_end)
-    open2close = False
+    open2close = False # if true, input_size/in_channels are 5
 
     # Training network
-    trainer = train.NetworkTrainer(stock_data, insample_end_idx, input_size=5, in_channels=5, block_channels=32, window_size=32, 
+    trainer = train.NetworkTrainer(stock_data, insample_end_idx, input_size=4, in_channels=4, block_channels=32, window_size=32, 
                                    out_channels=64, bidirectional=True, r=1, output_size=1, from_open=open2close, prob_target=False)
     if exec_train == 'y':
         train_loss = trainer.do_train(batch_size=64, epoch=30)

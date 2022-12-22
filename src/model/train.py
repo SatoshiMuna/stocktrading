@@ -45,10 +45,10 @@ class NetworkTrainer:
         # Initialize network
         torch.manual_seed(seed)
         # self.net = SeriesRNN(input_size, hidden_size, num_layers, bidirectional, output_size)
-        # self.net = SeriesLSTM(input_size, hidden_size, num_layers, bidirectional, output_size)
+        #self.net = SeriesLSTM(input_size, hidden_size, num_layers, bidirectional, output_size)
         # self.net = SelfAttnSeriesRNN(input_size, hidden_size, num_layers, bidirectional, da, r, output_size)
-        # self.net = SelfAttnSeriesLSTM(input_size, hidden_size, num_layers, bidirectional, da, r, output_size)
-        self.net = DilatedConvResNet(in_channels, block_channels, out_channels, window_size, num_blocks, output_size)
+        self.net = SelfAttnSeriesLSTM(input_size, hidden_size, num_layers, bidirectional, da, r, output_size)
+        #self.net = DilatedConvResNet(in_channels, block_channels, out_channels, window_size, num_blocks, output_size)
         #summary(self.net, input_size=(64, window_size, input_size))
         
     def do_train(self, learning_rate=0.01, batch_size=32, epoch=5):
