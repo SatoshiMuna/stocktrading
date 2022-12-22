@@ -55,7 +55,7 @@ class SelfAttention(nn.Module):
     
     def forward(self, rnn_out):  # rnn_out:(N, L, D*Ho)              
         scores = self.W2(self.tanh(self.W1(rnn_out)))   # scores:(N, L, r)
-        attn_weights = F.softmax(scores, dim=2)
+        attn_weights = F.softmax(scores, dim=1)
         out = torch.matmul(torch.transpose(attn_weights, 1, 2), rnn_out) # out:(N, r, L)*(N, L, D*Ho)→(N, r, D*Ho)
         return out, attn_weights
 

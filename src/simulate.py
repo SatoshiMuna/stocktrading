@@ -71,8 +71,9 @@ class AIStrategy(Strategy):
     def next(self):
         if self.ai_strategy == 1 and self.position.is_long == False:
             self.buy()
-        elif self.ai_strategy == 0 and self.position.is_short == False:
-            self.sell()
+        elif self.ai_strategy == 0:# and self.position.is_short == False:
+            self.position.close()
+            # self.sell()
 
     def decide(self, series):
         return series
