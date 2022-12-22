@@ -38,7 +38,7 @@ def main(stock_code, data_start, data_end, insample_end, exec_train):
     trainer = train.NetworkTrainer(stock_data, insample_end_idx, input_size=4, in_channels=4, block_channels=32, window_size=32, 
                                    out_channels=64, bidirectional=True, r=1, output_size=1, from_open=open2close, prob_target=False)
     if exec_train == 'y':
-        train_loss = trainer.do_train(batch_size=64, epoch=30)
+        train_loss = trainer.do_train(learning_rate=0.01, batch_size=64, epoch=30)
         # Plot train loss 
         pd.Series(train_loss).plot(title='training-loss')
         plt.show()
