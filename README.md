@@ -52,7 +52,8 @@ The program does NOT ensure forecasting accuracy and trading performance!
 <br>
 ** ResNet with dilated convolutional layers as a residual block. 
 
-backtesting example of SelfAttnLSTM(r=2)
+![backtesting example of SelfAttnLSTM(r=2)](https://github.com/SatoshiMuna/stocktrading/blob/main/SelfAttnLSTM(r%3D2).png)
+<br>
 <img width="100" src="https://github.com/SatoshiMuna/stocktrading/blob/main/SelfAttnLSTM(r%3D2).png">
 
 ・2nd oos test  (predict today's close price)
