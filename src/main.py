@@ -1,6 +1,7 @@
 import logging
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import seaborn as sns
 
 from model import train
@@ -36,7 +37,7 @@ def main(stock_code, data_start, data_end, insample_end, exec_train):
 
     # Training network
     trainer = train.NetworkTrainer(stock_data, insample_end_idx, input_size=4, in_channels=4, block_channels=32, window_size=32, 
-                                   out_channels=64, bidirectional=True, r=1, output_size=1, from_open=open2close, prob_target=False)
+                                   out_channels=64, bidirectional=True, r=2, output_size=1, from_open=open2close, prob_target=False)
     if exec_train == 'y':
         train_loss = trainer.do_train(learning_rate=0.01, batch_size=64, epoch=30)
         # Plot train loss 
@@ -54,8 +55,14 @@ def main(stock_code, data_start, data_end, insample_end, exec_train):
     # Visualize
     diffs = df_out['Forecast'] - df_out['Close']
     df = df_out.assign(Difference=diffs)
-    ax = df[['Close', 'Forecast', 'Difference']].plot(title='close-forecasts')
-    ax.axvline(insample_end, color='black')
+
+    fig = plt.figure()    
+    axes = fig.subplots(nrows=2, ncols=1, sharex=True, gridspec_kw=dict(height_ratios=[2, 1]))
+    a1 = df[['Close', 'Forecast']].plot(ax=axes[0], title='close price forecasts')
+    # ax = df[['Close', 'Forecast', 'Difference']].plot(title='close-forecasts')
+    a1.axvline(insample_end, color='black')
+    a2 = df[['Difference']].plot(ax=axes[1], color='blue', title='forecast errors')
+    a2.axvline(insample_end, color='black')
     plt.show()
 
 if __name__ == '__main__':
