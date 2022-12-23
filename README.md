@@ -9,7 +9,10 @@ The purpose of this site is to open personal learning outcomes of algorithmic tr
 This site is NOT intended to solicit investment in or recommend purchase or sale of specific products. 
 <br>
 The program does NOT ensure forecasting accuracy and trading performance!
-
+<br>
+このサイトでは株価予測のプログラムを公開しておりますが、
+投資や特定の金融商品の購入を推奨するものではありません。<br>
+プログラムの予測精度や予測を用いた投資収益は保証しません。
 
 ### FEATURES
 * Main four types of time series - Open, High, Low, Close prices are utilized for model input.
@@ -26,17 +29,17 @@ The program does NOT ensure forecasting accuracy and trading performance!
 ### SIMPLE EXPERIMENTS
 #### 1.Training Settings
 * Train each model with using over 10 years daily stock prices including Open, High, Low and Close.
-* Input sequence length is 32 and target is next day's close price (the target length is 1).
-* Input sequences and targets are extracted from a stock time series, then the training sample size is 2,455.
+* Input window size is 32 and target length is 1 because it is the close price of tomorrow or today.
+* Inputs and targets are extracted sequencially from a stock time series, then the supervised data size is 2,455.
 * Batch size is 64, the number of epoch is 30, loss function is MSE, and optimizer is Adam.
 #### 2.Out-of-sample Tests
-* Firstly, predict a close price of tommorow when we have got the today's one everyday during the forecast horizon (for 10 months).
-* Secondaly, predict a today's close price when we have got the today's open price everyday during the forecast horizon (for 10 months).  
+* Firstly, predict a tomorrow's close price everyday when we have got the today's one during the forecast horizon (for 10 months).
+* Secondaly, predict a today's close price everyday when we have got the today's open price during the forecast horizon (for 10 months).  
 * Forecasting performance is evaluated by MAPE and RMSE.
 #### 3.Position Strategy
 * Take a long position (buy stocks) and keep it when the predicted price is larger than the today's one (1st oos test).
 * Close the position when the predicted price is smaller than the today's one (1st oos test).
-* Take a long/short position based on the predition at the time to open and close the position at the end of daily trade (2nd oos test).  
+* Take a long/short position based on the predition at the time to open and close it at the end of daily trade (2nd oos test).  
 
 #### 4.Results (Stock code: 6501 TYO)
 ・1st oos test (predict the tommorow close price)
