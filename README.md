@@ -52,9 +52,11 @@ The program does NOT ensure forecasting accuracy and trading performance!
 <br>
 ** ResNet with dilated convolutional layers as a residual block. 
 
-![backtesting example of SelfAttnLSTM(r=2)](https://github.com/SatoshiMuna/stocktrading/blob/main/SelfAttnLSTM(r%3D2).png)
-<br>
-<img width="100" src="https://github.com/SatoshiMuna/stocktrading/blob/main/SelfAttnLSTM(r%3D2).png">
+With regard to the model of SelfAttnLSTM(r=2), the graphs of training loss, forecasts and backtesting output are shown below.
+![training loss of SelfAttnLSTM(r=2)](https://github.com/SatoshiMuna/stocktrading/blob/main/SelfAttnLSTM(r%3D2)_loss.png)
+![forecast result of SelfAttnLSTM(r=2)](https://github.com/SatoshiMuna/stocktrading/blob/main/SelfAttnLSTM(r%3D2)_forecasts.png)
+![backtesting output of SelfAttnLSTM(r=2)](https://github.com/SatoshiMuna/stocktrading/blob/main/SelfAttnLSTM(r%3D2).png)
+
 
 ・2nd oos test  (predict today's close price)
 |  model               |  MAPE  |  RMSE    |  PROFIT***|
