@@ -42,7 +42,7 @@ The program does NOT ensure forecasting accuracy and trading performance!
 * Take a long/short position based on the predition at the time to open and close it at the end of daily trade (2nd oos test).  
 
 #### 4.Results (Stock code: 6501 TYO)
-・1st oos test (predict the tommorow close price)
+・1st oos test (predict the tomorrow's close price)
 |  model               |  MAPE  |  RMSE    |  PROFIT   |
 |  :----:              | :----: | :----:   |   ----:   |
 |  LSTM                | 0.0154 | 128.9547 |   1,594   |
@@ -73,7 +73,7 @@ With regard to the model of SelfAttnLSTM(r=2), the graphs of training loss, fore
 *** The way to calculate the PROFIT is different from one of the 1st test. 
 
 #### Results (Stock code: 8035 TYO)
-・1st oos test (predict the tommorow close price)
+・1st oos test (predict the tomorrow's close price)
 |  model               |  MAPE  |  RMSE     |  PROFIT   |
 |  :----:              | :----: |  :----:   |   ----:   |
 |  LSTM                | 0.0218 | 1321.3167 |  -16,707  |
