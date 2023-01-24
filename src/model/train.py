@@ -120,7 +120,7 @@ class NetworkTrainer:
                     y = y[0]
                     y_pred = y_pred[0]
                     print(y2.to('cpu').numpy().copy(), y_pred2.to('cpu').numpy().copy())
-                if idx >= self.insample_end_idx - self.window_size:  # when true, y and y_pred are in the forecast period
+                if idx > self.insample_end_idx - self.window_size:  # when true, y and y_pred are in the forecast period
                     mape.append(torch.abs((y-y_pred)/y).to('cpu').numpy().copy())
                     rmse.append(torch.pow((y-y_pred)*self.normalization, 2).to('cpu').numpy().copy())
                 close_fcsts = np.append(close_fcsts, y_pred.to('cpu').numpy().copy() * self.normalization)
