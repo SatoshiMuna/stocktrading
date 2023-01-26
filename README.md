@@ -41,7 +41,7 @@ The program does NOT ensure forecasting accuracy and trading performance!
 * Close the position when the predicted price is smaller than the today's one (1st oos test).
 * Take a long/short position based on the predition at the time to open and close it at the end of daily trade (2nd oos test).  
 
-#### 4.Results (Stock code: 6501 TYO)
+#### 4.Results (Stock code: 6501 TSE)
 ・1st oos test (predict the tomorrow's close price)
 |  model               |  MAPE  |  RMSE    |  PROFIT   |
 |  :----:              | :----: | :----:   |   ----:   |
@@ -72,7 +72,7 @@ With regard to the model of SelfAttnLSTM(r=2), the graphs of training loss, fore
 
 *** The way to calculate the PROFIT is different from one of the 1st test. 
 
-#### Results (Stock code: 8035 TYO)
+#### Results (Stock code: 8035 TSE)
 ・1st oos test (predict the tomorrow's close price)
 |  model               |  MAPE  |  RMSE     |  PROFIT   |
 |  :----:              | :----: |  :----:   |   ----:   |
@@ -91,3 +91,58 @@ With regard to the model of SelfAttnLSTM(r=2), the graphs of training loss, fore
 |  SelfAttnLSTM(r=5)   | 0.0237 | 1477.9225 |  12,425   |
 |  DilatedConvResNet   | 0.0351 | 1951.5614 |  10,681   |
 
+#### 5. Additive Results
+* Price forecasting and trading performance for 20 companies' stocks in various industries of TSE(Prime).
+* The SelfAttnLSTM(r=2) model is utilized.
+
+・1st oos test (predict the tomorrow's close price)
+|  stock code  |  industry | MAPE  |   RMSE   |   PROFIT  |
+|  :----:      |  :----:   | :----:|  :---:   |   ----:   |
+|1925|construction|0.022390258|79.371544|-3,701|
+|2502|food|0.016816227|103.79857|-340|
+|2802|food|0.012737455|60.882423|18,957|
+|3382|retail|0.016506597|116.24326|15,581|
+|3402|fiber|0.07663136|58.872154|19,240|
+|3861|pulp/paper|0.018936943|12.592528|-7,818|
+|4507|pharmaceuticals|0.016800655|172.45436|-5,044|
+|4751|service|0.021781694|37.863106|3,094|
+|4901|chemistry|0.014572835|135.94965|754|
+|4911|chemistry|0.021211086|153.65544|-12,255|
+|6272|machinery|0.022701437|33.118965|146|
+|6471|machinery|0.017931495|16.313107|2,385|
+|6501|electromechanical|0.01582813|132.64684|13,870|
+|7203|automobile|0.021113189|54.520725|-2,527|
+|7741|precision machinery|0.019753909|351.32437|6,926|
+|8001|trading company|0.015807664|77.08195|6,800|
+|8035|electromechanical|0.021385979|1320.1464|2,023|
+|8316|bank|0.02017012|96.63412|-5,194|
+|9020|railroad|0.011764813|112.12646|11,618|
+|9433|communication|0.012926099|67.12559|581|
+|TOTAL||||63,341|
+|AVERAGE||||3167.05|
+
+・2nd oos test (predict today's close price)
+|  stock code    |  industry  |  MAPE  |   RMSE   |   PROFIT  |
+|  :----:        |  :----:    | :----: |  :----:  |   ----:   |
+|1925|construction|0.010447112|41.158936|249|
+|2502|food|0.01183756|75.209496|751|
+|2802|food|0.011183262|53.97314|223|
+|3382|retail|0.012955708|92.99024|84|
+|3402|fiber|0.016609129|14.541413|6|
+|3861|pulp/paper|0.010005164|7.529804|-78|
+|4507|pharmaceuticals|0.016676743|163.84259|957|
+|4751|service|0.022607347|37.07497|56|
+|4901|chemistry|0.014246126|127.49055|-625|
+|4911|chemistry|0.016560735|123.72586|-828|
+|6272|machinery|0.018976301|28.0424|-118|
+|6471|machinery|0.017675254|16.015644|144|
+|6501|electromechanical|0.015159226|122.51744|-191|
+|7203|automobile|0.012190495|33.517616|103|
+|7741|precision machinery|0.0167388|298.49338|365|
+|8001|trading company|0.012706843|63.072407|96|
+|8035|electromechanical|0.019787943|1188.1904|19,089|
+|8316|bank|0.009523883|51.729343|505|
+|9020|railroad|0.013989773|128.0516|-103|
+|9433|communication|0.014662711|72.46877|-862|
+|TOTAL||||19,823|
+|AVERAGE||||991.15|
